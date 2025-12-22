@@ -1,18 +1,22 @@
 # Build outputs
 bin/
 obj/
+publish/
+dist/
+
+# Runtime files at root (copied for convenience)
+*.dll
+*.pdb
+Promptveil.exe
+*.deps.json
+*.runtimeconfig.json
 
 # IDE
 .vs/
 *.user
 
-# Debug files
-debug.log
-nul
-
-# Python cache
-__pycache__/
-*.pyc
+# Debug/log files
+*.log
 
 # Temp files
 *.tmp

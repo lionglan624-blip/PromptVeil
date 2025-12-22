@@ -105,8 +105,9 @@ public class InputLineDetector
         const int maxInputAreaHeight = 200; // Maximum expected height of input area in pixels
 
         // Scan from bottom up to find the FIRST gray line (bottom of input area)
+        // Extended range to 5% from top to detect input line when near top of window
         int startY = (int)(height * 0.95);
-        int endY = (int)(height * 0.2);
+        int endY = (int)(height * 0.05);
 
         Log($"Scanning from Y={startY} to Y={endY} (height={height}), windowRect=({rect.Left},{rect.Top},{rect.Right},{rect.Bottom})");
 
