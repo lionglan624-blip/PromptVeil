@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet:*)",
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(cd:*)",
+      "Bash(mkdir:*)",
+      "Bash(where:*)",
+      "Bash(echo:*)",
+      "Bash(cat:*)",
+      "Bash(type:*)",
+      "Bash(copy:*)",
+      "Bash(move:*)",
+      "Bash(ren:*)",
+      "Bash(msbuild:*)",
+      "Bash(nuget:*)",
+      "Bash(where:*)",
+      "Bash(taskkill:*)",
+      "Bash(start \"\" \"bin\\\\Debug\\\\net8.0-windows\\\\Promptveil.exe\")",
+      "Bash(timeout:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(start \"\" \"c:\\\\Promptveil\\\\bin\\\\Debug\\\\net8.0-windows\\\\Promptveil.exe\")",
+      "Bash(powershell:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell -ExecutionPolicy:*)",
+      "Bash(cmd:*)",
+      "Bash(del:*)",
+      "Bash(rd:*)",
+      "Bash(rmdir:*)",
+      "Bash(xcopy:*)",
+      "Bash(robocopy:*)",
+      "Bash(start:*)"
+    ],
+    "deny": [
+      "Bash(format:*)",
+      "Bash(rm -rf /:*)",
+      "Bash(del /s /q C::*)",
+      "Bash(rd /s /q C::*)",
+      "Bash(diskpart:*)"
+    ]
+  }
+}

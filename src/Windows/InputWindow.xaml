@@ -1,0 +1,69 @@
+<Window x:Class="Promptveil.Windows.InputWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Input"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        PreviewMouseRightButtonDown="Window_MouseRightButtonDown"
+        PreviewMouseRightButtonUp="Window_MouseRightButtonUp"
+        PreviewMouseMove="Window_MouseMove">
+
+    <Grid Margin="5,0,5,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Prompt indicator -->
+        <TextBlock Grid.Column="0"
+                   Text="&gt;"
+                   Foreground="#888888"
+                   FontFamily="Consolas"
+                   FontSize="{Binding FontSize}"
+                   VerticalAlignment="Center"
+                   Margin="0,0,5,0"/>
+
+        <!-- Input TextBox -->
+        <TextBox x:Name="InputBox"
+                 Grid.Column="1"
+                 Background="#1E1E1E"
+                 Foreground="#CCCCCC"
+                 CaretBrush="#CCCCCC"
+                 BorderThickness="0"
+                 FontFamily="Consolas"
+                 FontSize="{Binding FontSize}"
+                 VerticalAlignment="Center"
+                 VerticalContentAlignment="Center"
+                 Padding="5,3"
+                 InputMethod.IsInputMethodEnabled="True"
+                 InputMethod.PreferredImeState="On"
+                 KeyDown="InputBox_KeyDown"
+                 PreviewKeyDown="InputBox_PreviewKeyDown"
+                 PreviewKeyUp="InputBox_PreviewKeyUp"/>
+
+        <!-- Hover close button -->
+        <Border x:Name="CloseButtonArea"
+                Grid.Column="2"
+                Width="20"
+                Height="20"
+                Margin="5,0,0,0"
+                Background="Transparent"
+                MouseEnter="CloseButtonArea_MouseEnter"
+                MouseLeave="CloseButtonArea_MouseLeave"
+                Cursor="Hand">
+            <TextBlock x:Name="CloseButton"
+                       Text="×"
+                       Foreground="#666666"
+                       FontSize="16"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Visibility="Hidden"
+                       MouseLeftButtonDown="CloseButton_Click"/>
+        </Border>
+    </Grid>
+</Window>

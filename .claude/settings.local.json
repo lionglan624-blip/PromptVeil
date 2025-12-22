@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where:*)",
+      "Bash(taskkill:*)",
+      "Bash(start \"\" \"bin\\\\Debug\\\\net8.0-windows\\\\Promptveil.exe\")",
+      "Bash(timeout:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(start \"\" \"c:\\\\Promptveil\\\\bin\\\\Debug\\\\net8.0-windows\\\\Promptveil.exe\")",
+      "Bash(powershell -Command \"Get-Item ''c:\\\\Promptveil\\\\Resources\\\\TrayIcon.ico'' | Select-Object Name, Length, LastWriteTime\")",
+      "Bash(python:*)",
+      "Bash(pip install:*)"
+    ]
+  }
+}
