@@ -25,6 +25,7 @@ public partial class App : Application
     private ClipboardInjector _clipboardInjector = null!;
     private GlobalHotkeyService _hotkeyService = null!;
     private InputLineDetector _lineDetector = null!;
+    private KeyboardHookService _keyboardHook = null!;
 
     private bool _overlayVisible = true;
     private bool _paused = false;
@@ -213,6 +214,64 @@ public partial class App : Application
             // Hotkey may already be registered by another app
         }
 
+        // Setup keyboard hooks for overlay control
+        _keyboardHook = new KeyboardHookService();
+
+        // Right Ctrl: Toggle overlay (when terminal/overlay is active)
+        _keyboardHook.ShouldProcessRightCtrl = () => _windowTracker.IsTracking && IsTerminalForeground();
+        _keyboardHook.RightCtrlPressed += (s, e) => Dispatcher.Invoke(ToggleOverlayWithRedetect);
+
+        // Left Ctrl: Re-detect and focus overlay (when terminal is foreground and overlay hidden)
+        _keyboardHook.ShouldProcessLeftCtrl = () => _windowTracker.IsTracking &&
+            NativeMethods.GetForegroundWindow() == _windowTracker.TargetWindow;
+        _keyboardHook.LeftCtrlPressed += (s, e) => Dispatcher.Invoke(RedetectAndShowOverlay);
+
+        // Note: Shift clear is handled directly in InputWindow.PreviewKeyUp
+
+        _keyboardHook.Start();
+    }
+
+    private bool IsTerminalForeground()
+    {
+        var foreground = NativeMethods.GetForegroundWindow();
+        return foreground == _windowTracker.TargetWindow ||
+               foreground == new System.Windows.Interop.WindowInteropHelper(_inputWindow!).Handle ||
+               foreground == new System.Windows.Interop.WindowInteropHelper(_maskWindow!).Handle;
+    }
+
+    private void ToggleOverlayWithRedetect()
+    {
+        if (_paused || _isCalibrating)
+            return;
+
+        if (_overlayVisible)
+        {
+            // Hide overlay and focus terminal
+            HideOverlay();
+            NativeMethods.SetForegroundWindow(_windowTracker.TargetWindow);
+        }
+        else
+        {
+            // Show overlay with re-detection
+            RedetectAndShowOverlay();
+        }
+    }
+
+    private void RedetectAndShowOverlay()
+    {
+        if (_paused || _isCalibrating)
+            return;
+
+        Log("RedetectAndShowOverlay triggered");
+
+        // Clear detected area to force re-detection
+        _detectedInputArea = (-1, -1);
+
+        // Show overlay (will use fallback position initially)
+        ShowOverlay();
+
+        // Trigger re-detection
+        TriggerLineDetection();
     }
 
     private void SetupWindowTracker()
@@ -629,6 +688,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _keyboardHook?.Dispose();
         _hotkeyService?.Dispose();
         _windowTracker?.Dispose();
         _trayIcon?.Dispose();

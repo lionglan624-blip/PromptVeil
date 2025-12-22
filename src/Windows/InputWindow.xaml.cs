@@ -26,6 +26,9 @@ public partial class InputWindow : Window
     // Ctrl key tracking for solo Ctrl redetect
     private bool _ctrlUsedWithOtherKey = false;
 
+    // Shift key tracking for solo Shift clear
+    private bool _shiftUsedWithOtherKey = false;
+
     private static readonly string LogPath = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Promptveil", "detection.log");
@@ -153,6 +156,16 @@ public partial class InputWindow : Window
         {
             _ctrlUsedWithOtherKey = true;
         }
+
+        // Track if Shift was pressed alone (for clear on release)
+        if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
+        {
+            _shiftUsedWithOtherKey = false;
+        }
+        else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+        {
+            _shiftUsedWithOtherKey = true;
+        }
     }
 
     private void InputBox_PreviewKeyUp(object sender, KeyEventArgs e)
@@ -164,6 +177,30 @@ public partial class InputWindow : Window
             e.Handled = true;
             RedetectRequested?.Invoke(this, EventArgs.Empty);
         }
+
+        // Shift released alone -> clear terminal input line
+        if ((e.Key == Key.LeftShift || e.Key == Key.RightShift) && !_shiftUsedWithOtherKey)
+        {
+            Log($"Shift released alone - clearing terminal input");
+            e.Handled = true;
+            _ = ClearTerminalInputAsync();
+        }
+    }
+
+    private async Task ClearTerminalInputAsync()
+    {
+        if (TargetWindow == IntPtr.Zero)
+            return;
+
+        // Send Ctrl+U to terminal to clear current line
+        Helpers.NativeMethods.SetForegroundWindow(TargetWindow);
+        await Task.Delay(30);
+        Helpers.NativeMethods.SendCtrlU();
+        await Task.Delay(30);
+
+        // Return focus to overlay
+        Activate();
+        InputBox.Focus();
     }
 
     private void NavigateHistory(int direction)

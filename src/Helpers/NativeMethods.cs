@@ -180,6 +180,7 @@ public static class NativeMethods
     public const int VK_CONTROL = 0x11;
     public const int VK_RETURN = 0x0D;
     public const int VK_V = 0x56;
+    public const int VK_U = 0x55;
     public const uint KEYEVENTF_KEYUP = 0x0002;
 
     public static void SendCtrlV()
@@ -187,6 +188,14 @@ public static class NativeMethods
         keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
         keybd_event(VK_V, 0, 0, UIntPtr.Zero);
         keybd_event(VK_V, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+    }
+
+    public static void SendCtrlU()
+    {
+        keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
+        keybd_event(VK_U, 0, 0, UIntPtr.Zero);
+        keybd_event(VK_U, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
         keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
     }
 
