@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using H.NotifyIcon;
 using H.NotifyIcon.Core;
 using Promptveil.Helpers;
@@ -31,6 +32,7 @@ public partial class App : Application
     private (int topY, int bottomY) _detectedInputArea = (-1, -1);
     private NativeMethods.RECT _lastTrackedRect;
     private bool _pendingLineDetection = false;
+    private DispatcherTimer? _moveEndTimer;
 
     private static readonly string LogPath = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -215,6 +217,18 @@ public partial class App : Application
 
     private void SetupWindowTracker()
     {
+        // Timer to detect end of window movement
+        _moveEndTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        _moveEndTimer.Tick += (s, e) =>
+        {
+            _moveEndTimer.Stop();
+            Log("Window move ended - triggering re-detection");
+            TriggerLineDetection();
+        };
+
         _windowTracker.WindowMoved += (s, rect) =>
         {
             if (_paused || _isCalibrating)
@@ -224,6 +238,7 @@ public partial class App : Application
             {
                 // Check if window size changed (triggers line detection)
                 bool sizeChanged = _lastTrackedRect.Width != rect.Width || _lastTrackedRect.Height != rect.Height;
+                bool positionChanged = _lastTrackedRect.Left != rect.Left || _lastTrackedRect.Top != rect.Top;
 
                 // Update detected area coordinates when window moves (not resizes)
                 if (!sizeChanged && _detectedInputArea.topY > 0 && _detectedInputArea.bottomY > 0 && _lastTrackedRect.Width > 0)
@@ -241,6 +256,12 @@ public partial class App : Application
                 if (sizeChanged && _overlayVisible)
                 {
                     TriggerLineDetection();
+                }
+                else if (positionChanged && _overlayVisible)
+                {
+                    // Reset timer on each move event - will fire 300ms after last move
+                    _moveEndTimer.Stop();
+                    _moveEndTimer.Start();
                 }
 
                 UpdateOverlayPosition(rect);

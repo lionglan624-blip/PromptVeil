@@ -89,6 +89,8 @@ public partial class InputWindow : Window
 
     public void FocusInput()
     {
+        // Activate this window first (needed after injecting to terminal)
+        Activate();
         InputBox.Focus();
         Keyboard.Focus(InputBox);
     }
