@@ -221,9 +221,8 @@ public partial class App : Application
         _keyboardHook.ShouldProcessRightCtrl = () => _windowTracker.IsTracking && IsTerminalForeground();
         _keyboardHook.RightCtrlPressed += (s, e) => Dispatcher.Invoke(ToggleOverlayWithRedetect);
 
-        // Left Ctrl: Re-detect and focus overlay (when terminal is foreground and overlay hidden)
-        _keyboardHook.ShouldProcessLeftCtrl = () => _windowTracker.IsTracking &&
-            NativeMethods.GetForegroundWindow() == _windowTracker.TargetWindow;
+        // Left Ctrl: Re-detect and focus overlay (when terminal/overlay is active)
+        _keyboardHook.ShouldProcessLeftCtrl = () => _windowTracker.IsTracking && IsTerminalForeground();
         _keyboardHook.LeftCtrlPressed += (s, e) => Dispatcher.Invoke(RedetectAndShowOverlay);
 
         // Note: Shift clear is handled directly in InputWindow.PreviewKeyUp
@@ -527,7 +526,12 @@ public partial class App : Application
 
         _maskWindow?.Show();
         _inputWindow?.Show();
-        _inputWindow?.FocusInput();
+
+        // Delay focus to ensure window is fully shown
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
+        {
+            _inputWindow?.FocusInput();
+        });
 
         Log($"After Show: maskVisible={_maskWindow?.IsVisible}, inputVisible={_inputWindow?.IsVisible}");
 

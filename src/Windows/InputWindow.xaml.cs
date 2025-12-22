@@ -92,10 +92,27 @@ public partial class InputWindow : Window
 
     public void FocusInput()
     {
-        // Activate this window first (needed after injecting to terminal)
+        Log($"FocusInput called, IsVisible={IsVisible}");
+
+        // Get window handle
+        var hwnd = new WindowInteropHelper(this).Handle;
+        Log($"FocusInput: hwnd={hwnd}");
+
+        if (hwnd != IntPtr.Zero)
+        {
+            // Force foreground window using AttachThreadInput trick
+            var result = NativeMethods.ForceForegroundWindow(hwnd);
+            Log($"FocusInput: ForceForegroundWindow returned {result}");
+        }
+
+        // Activate WPF window
         Activate();
+        Log($"FocusInput: After Activate, IsActive={IsActive}");
+
+        // Focus the input box
         InputBox.Focus();
         Keyboard.Focus(InputBox);
+        Log($"FocusInput: After Focus, InputBox.IsFocused={InputBox.IsFocused}, Keyboard.FocusedElement={Keyboard.FocusedElement}");
     }
 
     public void ClearInput()

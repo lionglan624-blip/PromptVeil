@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -Command \"if ($env:CLAUDE_TOOL_INPUT -match 'dotnet build') { Copy-Item -Force 'bin\\Debug\\net8.0-windows\\*' '.' 2>$null }\""
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(dotnet:*)",

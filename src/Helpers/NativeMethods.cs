@@ -170,6 +170,46 @@ public static class NativeMethods
     [DllImport("user32.dll")]
     public static extern IntPtr SetFocus(IntPtr hWnd);
 
+    [DllImport("user32.dll")]
+    public static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool BringWindowToTop(IntPtr hWnd);
+
+    public const byte VK_MENU = 0x12; // Alt key
+
+    /// <summary>
+    /// Force set foreground window using Alt key trick
+    /// </summary>
+    public static bool ForceForegroundWindow(IntPtr hWnd)
+    {
+        try
+        {
+            var foregroundWnd = GetForegroundWindow();
+            if (foregroundWnd == hWnd)
+                return true;
+
+            // Send Alt key press/release to unlock foreground lock
+            keybd_event(VK_MENU, 0, 0, UIntPtr.Zero);
+            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+
+            // Now SetForegroundWindow should work
+            SetForegroundWindow(hWnd);
+            BringWindowToTop(hWnd);
+
+            return GetForegroundWindow() == hWnd;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     #endregion
 
     #region Keyboard Input
