@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,6 +16,9 @@ namespace Promptveil;
 /// </summary>
 public partial class App : Application
 {
+    private const string MutexName = "Promptveil_SingleInstance_Mutex";
+    private static Mutex? _instanceMutex;
+
     private TaskbarIcon? _trayIcon;
     private MaskWindow? _maskWindow;
     private InputWindow? _inputWindow;
@@ -34,6 +38,8 @@ public partial class App : Application
     private NativeMethods.RECT _lastTrackedRect;
     private bool _pendingLineDetection = false;
     private DispatcherTimer? _moveEndTimer;
+    private DispatcherTimer? _scrollEndTimer;
+    private bool _isScrolling = false;
 
     private static readonly string LogPath = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -52,6 +58,20 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Check for single instance
+        _instanceMutex = new Mutex(true, MutexName, out bool createdNew);
+        if (!createdNew)
+        {
+            // Another instance is already running
+            MessageBox.Show(
+                "Promptveilは既に起動しています。",
+                "Promptveil",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
 
         // Ensure Per-Monitor DPI V2 awareness
         NativeMethods.SetProcessDpiAwarenessContext(NativeMethods.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -285,6 +305,37 @@ public partial class App : Application
             _moveEndTimer.Stop();
             Log("Window move ended - triggering re-detection");
             TriggerLineDetection();
+        };
+
+        // Timer to detect end of scroll
+        _scrollEndTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(500)
+        };
+        _scrollEndTimer.Tick += (s, e) =>
+        {
+            _scrollEndTimer.Stop();
+            _isScrolling = false;
+            Log("Scroll ended - triggering re-detection for position reset");
+            // Reset detected area and re-detect to get current input line position
+            _detectedInputArea = (-1, -1);
+            TriggerLineDetection();
+        };
+
+        // Handle scroll events
+        _windowTracker.ScrollDetected += (s, e) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (_paused || _isCalibrating || !_overlayVisible)
+                    return;
+
+                _isScrolling = true;
+                // Reset timer on each scroll event - will fire 500ms after last scroll
+                _scrollEndTimer.Stop();
+                _scrollEndTimer.Start();
+                Log("Scroll detected - waiting for scroll to end");
+            });
         };
 
         _windowTracker.WindowMoved += (s, rect) =>
@@ -700,6 +751,10 @@ public partial class App : Application
         _maskWindow?.Close();
         _inputWindow?.Close();
         _calibrationWindow?.Close();
+
+        // Release mutex
+        _instanceMutex?.ReleaseMutex();
+        _instanceMutex?.Dispose();
 
         base.OnExit(e);
     }

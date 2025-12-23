@@ -17,7 +17,9 @@ public class WindowTracker : IDisposable
 
     private IntPtr _targetWindow;
     private IntPtr _eventHook;
+    private IntPtr _mouseHook;
     private NativeMethods.WinEventDelegate? _hookDelegate;
+    private NativeMethods.LowLevelMouseProc? _mouseHookDelegate;
     private DispatcherTimer? _pollTimer;
     private NativeMethods.RECT _lastRect;
     private bool _disposed;
@@ -27,6 +29,7 @@ public class WindowTracker : IDisposable
     public event EventHandler? WindowLost;
     public event EventHandler? FocusLost;
     public event EventHandler? FocusGained;
+    public event EventHandler? ScrollDetected;
 
     public IntPtr TargetWindow => _targetWindow;
     public bool IsTracking => _targetWindow != IntPtr.Zero;
@@ -108,6 +111,50 @@ public class WindowTracker : IDisposable
             // Fallback to polling
             SetupPolling();
         }
+
+        // Setup mouse hook for scroll detection
+        SetupMouseHook();
+    }
+
+    private void SetupMouseHook()
+    {
+        try
+        {
+            _mouseHookDelegate = MouseHookProc;
+            using var process = Process.GetCurrentProcess();
+            using var module = process.MainModule;
+            _mouseHook = NativeMethods.SetWindowsHookEx(
+                NativeMethods.WH_MOUSE_LL,
+                _mouseHookDelegate,
+                NativeMethods.GetModuleHandle(module?.ModuleName),
+                0);
+        }
+        catch
+        {
+            // Mouse hook setup failed - scroll detection won't work
+        }
+    }
+
+    private IntPtr MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam)
+    {
+        if (nCode >= 0 && wParam == (IntPtr)NativeMethods.WM_MOUSEWHEEL)
+        {
+            // Check if scroll happened over terminal window
+            var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
+            var point = hookStruct.pt;
+
+            if (NativeMethods.GetWindowRectDpiAware(_targetWindow, out var rect))
+            {
+                if (point.x >= rect.Left && point.x <= rect.Right &&
+                    point.y >= rect.Top && point.y <= rect.Bottom)
+                {
+                    // Scroll detected over terminal window
+                    ScrollDetected?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        return NativeMethods.CallNextHookEx(_mouseHook, nCode, wParam, lParam);
     }
 
     private bool TrySetupEventHook()
@@ -267,9 +314,16 @@ public class WindowTracker : IDisposable
             _eventHook = IntPtr.Zero;
         }
 
+        if (_mouseHook != IntPtr.Zero)
+        {
+            NativeMethods.UnhookWindowsHookEx(_mouseHook);
+            _mouseHook = IntPtr.Zero;
+        }
+
         _pollTimer?.Stop();
         _pollTimer = null;
         _hookDelegate = null;
+        _mouseHookDelegate = null;
     }
 
     public void Dispose()

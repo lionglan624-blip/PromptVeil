@@ -56,6 +56,8 @@ public class ClipboardInjector
             if (sendEnter)
             {
                 NativeMethods.SendEnter();
+                // Wait for Enter to be processed by terminal
+                await Task.Delay(50);
             }
         }
         finally
