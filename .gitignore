@@ -20,3 +20,6 @@ Promptveil.exe
 
 # Temp files
 *.tmp
+
+# Windows NUL device artifact
+nul
