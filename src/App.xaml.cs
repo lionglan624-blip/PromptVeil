@@ -39,7 +39,6 @@ public partial class App : Application
     private bool _pendingLineDetection = false;
     private DispatcherTimer? _moveEndTimer;
     private DispatcherTimer? _scrollEndTimer;
-    private bool _isScrolling = false;
 
     private static readonly string LogPath = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -315,7 +314,6 @@ public partial class App : Application
         _scrollEndTimer.Tick += (s, e) =>
         {
             _scrollEndTimer.Stop();
-            _isScrolling = false;
             Log("Scroll ended - triggering re-detection for position reset");
             // Reset detected area and re-detect to get current input line position
             _detectedInputArea = (-1, -1);
@@ -330,7 +328,6 @@ public partial class App : Application
                 if (_paused || _isCalibrating || !_overlayVisible)
                     return;
 
-                _isScrolling = true;
                 // Reset timer on each scroll event - will fire 500ms after last scroll
                 _scrollEndTimer.Stop();
                 _scrollEndTimer.Start();
